@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام كشوف المرتبات - الأفرع</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh; color: #e0e0e0; padding: 20px;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header {
+            text-align: center; padding: 30px 20px;
+            background: rgba(255,255,255,0.05); border-radius: 20px;
+            margin-bottom: 25px; backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .header h1 { font-size: 2.2rem; color: #e94560; margin-bottom: 10px; text-shadow: 0 0 20px rgba(233, 69, 96, 0.3); }
+        .header p { color: #a0a0a0; font-size: 1rem; }
+        .stats-bar {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px; margin-bottom: 25px;
+        }
+        .stat-card {
+            background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px;
+            text-align: center; border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(5px); transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .stat-card .number { font-size: 2rem; font-weight: 700; color: #e94560; }
+        .stat-card .label { color: #a0a0a0; font-size: 0.9rem; margin-top: 5px; }
+        .controls {
+            background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px;
+            margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.1);
+            display: flex; flex-wrap: wrap; gap: 15px; align-items: center; justify-content: space-between;
+        }
+        .filter-group { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+        .filter-btn {
+            padding: 10px 20px; border: 2px solid #e94560; background: transparent;
+            color: #e94560; border-radius: 25px; cursor: pointer;
+            font-family: 'Cairo', sans-serif; font-weight: 600; transition: all 0.3s; font-size: 0.9rem;
+        }
+        .filter-btn:hover, .filter-btn.active { background: #e94560; color: white; box-shadow: 0 0 20px rgba(233, 69, 96, 0.4); }
+        .search-box { position: relative; flex: 1; min-width: 250px; }
+        .search-box input {
+            width: 100%; padding: 12px 45px 12px 15px;
+            border: 2px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2);
+            color: white; border-radius: 25px; font-family: 'Cairo', sans-serif;
+            font-size: 1rem; outline: none; transition: border-color 0.3s;
+        }
+        .search-box input:focus { border-color: #e94560; }
+        .search-box .icon { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #e94560; font-size: 1.2rem; }
+        .branch-filter {
+            padding: 10px 15px; border: 2px solid rgba(255,255,255,0.1);
+            background: rgba(0,0,0,0.2); color: white; border-radius: 25px;
+            font-family: 'Cairo', sans-serif; cursor: pointer; outline: none;
+        }
+        .branch-filter option { background: #1a1a2e; color: white; }
+        .table-container {
+            background: rgba(255,255,255,0.03); border-radius: 20px;
+            overflow: hidden; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px);
+        }
+        .table-header {
+            display: grid; grid-template-columns: 50px 2fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 80px;
+            background: rgba(233, 69, 96, 0.2); padding: 15px 10px; font-weight: 700;
+            color: #e94560; font-size: 0.85rem; text-align: center; gap: 5px;
+        }
+        .table-row {
+            display: grid; grid-template-columns: 50px 2fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 80px;
+            padding: 12px 10px; border-bottom: 1px solid rgba(255,255,255,0.05);
+            align-items: center; gap: 5px; transition: background 0.3s;
+        }
+        .table-row:hover { background: rgba(255,255,255,0.05); }
+        .table-row.received { background: rgba(46, 204, 113, 0.1); }
+        .table-row.received .name-cell { text-decoration: line-through; opacity: 0.7; }
+        .cell { text-align: center; font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .name-cell { text-align: right; font-weight: 600; color: #fff; }
+        .branch-tag { display: inline-block; padding: 3px 10px; background: rgba(233, 69, 96, 0.2); border-radius: 10px; font-size: 0.75rem; color: #e94560; }
+        .checkbox-cell { display: flex; justify-content: center; align-items: center; }
+        .custom-checkbox {
+            width: 24px; height: 24px; border: 2px solid #e94560; border-radius: 6px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: all 0.3s; background: transparent;
+        }
+        .custom-checkbox.checked { background: #2ecc71; border-color: #2ecc71; }
+        .custom-checkbox.checked::after { content: '✓'; color: white; font-weight: bold; font-size: 14px; }
+        .amount { font-family: 'Courier New', monospace; font-weight: 600; }
+        .positive { color: #2ecc71; }
+        .negative { color: #e94560; }
+        .net-amount { color: #f1c40f; font-weight: 700; font-size: 1rem; }
+        .no-results { text-align: center; padding: 50px; color: #a0a0a0; font-size: 1.2rem; }
+        .export-btn {
+            padding: 10px 20px; background: #2ecc71; color: white; border: none;
+            border-radius: 25px; cursor: pointer; font-family: 'Cairo', sans-serif;
+            font-weight: 600; transition: all 0.3s;
+        }
+        .export-btn:hover { background: #27ae60; box-shadow: 0 0 20px rgba(46, 204, 113, 0.4); }
+        .progress-bar { width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin-top: 5px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #e94560, #f1c40f); border-radius: 3px; transition: width 0.5s; }
+        @media (max-width: 1200px) { .table-header, .table-row { grid-template-columns: 40px 2fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 70px; font-size: 0.75rem; } }
+        @media (max-width: 900px) { .table-header, .table-row { grid-template-columns: 40px 2fr 1fr 1fr 1fr 1fr 1fr 1fr 70px; } .hide-mobile { display: none !important; } }
+        @media (max-width: 600px) { .table-header, .table-row { grid-template-columns: 40px 2fr 1fr 1fr 70px; } .hide-mobile-sm { display: none !important; } }
+        .toast {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: #2ecc71; color: white; padding: 15px 30px; border-radius: 25px;
+            font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            opacity: 0; transition: opacity 0.3s; z-index: 1000;
+        }
+        .toast.show { opacity: 1; }
+    </style>
+<base target="_blank">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 نظام كشوف المرتبات</h1>
+            <p>إدارة و متابعة رواتب موظفي الأفرع</p>
+        </div>
+        <div class="stats-bar">
+            <div class="stat-card">
+                <div class="number" id="totalEmployees">0</div>
+                <div class="label">إجمالي الموظفين</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="totalSalary">0</div>
+                <div class="label">إجمالي المرتبات</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="receivedCount">0</div>
+                <div class="label">تم الاستلام</div>
+                <div class="progress-bar"><div class="progress-fill" id="receivedProgress" style="width: 0%"></div></div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="pendingCount">0</div>
+                <div class="label">لم يتم الاستلام</div>
+            </div>
+        </div>
+        <div class="controls">
+            <div class="filter-group">
+                <button class="filter-btn active" data-filter="all" onclick="setFilter('all')">الكل</button>
+                <button class="filter-btn" data-filter="received" onclick="setFilter('received')">✅ تم الاستلام</button>
+                <button class="filter-btn" data-filter="pending" onclick="setFilter('pending')">⏳ لم يتم الاستلام</button>
+            </div>
+            <select class="branch-filter" id="branchFilter" onchange="filterByBranch()">
+                <option value="all">جميع الأفرع</option>
+            </select>
+            <div class="search-box">
+                <span class="icon">🔍</span>
+                <input type="text" id="searchInput" placeholder="ابحث باسم الموظف..." oninput="searchEmployees()">
+            </div>
+            <button class="export-btn" onclick="exportData()">📥 تصدير البيانات</button>
+        </div>
+        <div class="table-container">
+            <div class="table-header">
+                <div class="cell">#</div>
+                <div class="cell">الاسم</div>
+                <div class="cell hide-mobile-sm">الفرع</div>
+                <div class="cell">الراتب</div>
+                <div class="cell hide-mobile">الحضور</div>
+                <div class="cell hide-mobile">السحبيات</div>
+                <div class="cell hide-mobile">الإضافي</div>
+                <div class="cell hide-mobile">المكافآت</div>
+                <div class="cell hide-mobile">العقوبات</div>
+                <div class="cell">الصافي</div>
+                <div class="cell hide-mobile">ملاحظات</div>
+                <div class="cell">استلم</div>
+            </div>
+            <div id="tableBody"></div>
+        </div>
+    </div>
+    <div class="toast" id="toast">تم الحفظ بنجاح!</div>
+    <script>
+        let employees = [{"id": 1, "name": "صالح عبده", "salary": 2000.0, "days": 30, "withdrawals": 15.0, "extra": 0, "bonuses": 0, "penalties": 50.0, "net": 1935.0, "notes": "", "branch": "مدى الشام", "received": false}, {"id": 2, "name": "محمد بشير", "salary": 2500.0, "days": 30, "withdrawals": 200.0, "extra": 0, "bonuses": 0, "penalties": 300.0, "net": 2000.0, "notes": "", "branch": "مدى الشام", "received": false}, {"id": 3, "name": "ابراهيم شعبان", "salary": 2700.0, "days": 30, "withdrawals": 0.0, "extra": 0, "bonuses": 0, "penalties": 0.0, "net": 2700.0, "notes": "", "branch": "مدى الشام", "received": false}, {"id": 4, "name": "فيروزي علي كالينغال", "salary": 2500.0, "days": 30, "withdrawals": 320.0, "extra": 0, "bonuses": 0, "penalties": 0.0, "net": 2180.0, "notes": "", "branch": "مدى الشام", "received": false}, {"id": 5, "name": "ابو طاهر", "salary": 1000.0, "days": 30, "withdrawals": 0.0, "extra": 0, "bonuses": 0, "penalties": 0.0, "net": 1000.0, "notes": "", "branch": "مدى الشام", "received": false}, {"id": 6, "name": "سعيد الله شيرين", "salary": 1750.0, "days": 30, "withdrawals": 0.0, "extra": 0, "bonuses": 0, "penalties": 190.0, "net": 1560.0, "notes": "", "branch": "مدى الشام", "received": false}, {"id": 7, "name": "الياس ابو لحوم", "salary": 1820.0, "days": 29, "withdrawals": 604.0, "extra": 0, "bonuses": 0, "penalties": 100.0, "net": 1055.0, "notes": "", "branch": "مدى الشام", "received": false}, {"id": 8, "name": "هشام حامد", "salary": 2200.0, "days": 30, "withdrawals": 400.0, "extra": 0, "bonuses": 0, "penalties": 0.0, "net": 1800.0, "notes": "", "branch": "مدى الشام", "received": false}, {"id": 9, "name": "سميع الله شيرين", "salary": 1750.0, "days": 30, "withdrawals": 0.0, "extra": 0, "bonuses": 0, "penalties": 0.0, "net": 1750.0, "notes": "", "branch": "مدى الشام", "received": false}, {"id": 10, "name": "محمد شعيب", "salary": 2200.0, "days": 30, "withdrawals": 250.0, "extra": 0, "bonuses": 0, "penalties": 0.0, "net": 1950.0, "notes": "", "branch": "مدى الشام", "received": false}, {"id": 11, "name": "روبن لاسكر لاسكر", "salary": 1300.0, "days": 30, "withdrawals": 350.0, "extra": 0, "bonuses": 0, "penalties": 0.0, "net": 950.0, "notes": "", "branch": "مدى الشام", "received": false}, {"id": 12, "name": "حسام عبد القادر", "salary": 1800.0, "days": 30, "withdrawals": 850.0, "extra": 0, "bonuses": 0, "penalties": 0.0, "net": 950.0, "notes": "", "branch": "مدى الشام", "received": false}, {"id": 13, "name": "حازم مصطفى", "salary": 500.0, "days": 30, "withdrawals": 0.0, "extra": 0, "bonuses": 0, "penalties": 0.0, "net": 500.0, "notes": "", "branch": "مدى الشام", "received": false}, {"id": 14, "name": "ابو الياس", "salary": 4000.0, "days": 30, "withdrawals": 778.0, "extra": 0, "bonuses": 0, "penalties": 0.0, "net": 3223.0, "notes": "", "branch": "مدى الشام", "received": false}, {"id": 15, "name": "مستحقات مؤسسة", "salary": 2000.0, "days": 30, "withdrawals": 338.0, "extra": 0, "bonuses": 0, "penalties": 0.0, "net": 1662.0, "notes": "", "branch": "مدى الشام", "received": false}, {"id": 16, "name": "احمد حمدي", "salary": 2500.0, "days": 2, "withdrawals": 150.0, "extra": 0, "bonuses": 0, "penalties": 0.0, "net": 17.0, "notes": "", "branch": "الشرايع", "received": false}, {"id": 17, "name": "عاشور احمد عبد الله", "salary": 2000.0, "days": 29, "withdrawals": 30.0, "extra": 0, "bonuses": 0, "penalties": 0.0, "net": 1903.0, "notes": "", "branch": "الشرايع", "received": false}, {"id": 18, "name": "مصطفى محمد", "salary": 2000.0, "days": 30, "withdrawals": 950.0, "extra": 0, "bonuses": 0, "penalties": 350.0, "net": 1050.0, "notes": "", "branch": "الشرايع", "received": false}, {"id": 19, "name": "محمد نصر الدين", "salary": 2000.0, "days": 29, "withdrawals": 0.0, "extra": 0, "bonuses": 0, "penalties": 0.0, "net": 1933.0, "notes": "", "branch": "الشرايع", "received": false}, {"id": 20, "name": "ايمن فيصل شرف احمد", "salary": 1800.0, "days": 30, "withdrawals": 765.0, "extra": 0, "bonuses": 0, "penalties": 0.0, "net": 1035.0, "notes": "", "branch": "الشرايع", "received": false}, {"id": 21, "name": "بشار بشير", "salary": 1500.0, "days": 30, "withdrawals": 377.0, "extra": 0, "bonuses": 0, "penalties": 50.0, "net": 1123.0, "notes": "", "branch": "الشرايع", "received": false}, {"id": 22, "name": "حازم مصطفى", "salary": 500.0, "days": 30, "withdrawals": 0.0, "extra": 0, "bonuses": 0, "penalties": 0.0, "net": 500.0, "notes": "", "branch": "الشرايع", "received": false}, {"id": 23, "name": "ابو الياس", "salary": 2000.0, "days": 30, "withdrawals": 0.0, "extra": 0, "bonuses": 0, "penalties": 0.0, "net": 2000.0, "notes": "", "branch": "الشرايع", "received": false}, {"id": 24, "name": "مستحقات مؤسسة", "salary": 1000.0, "days": 30, "withdrawals": 0.0, "extra": 0, "bonuses": 0, "penalties": 0.0, "net": 1000.0, "notes": "", "branch": "الشرايع", "received": false}, {"id": 25, "name": "مصطفى رفاعي محمد", "salary": 2500.0, "days": 23, "withdrawals": 540.0, "extra": 0, "bonuses": 0, "penalties": 0.0, "net": 1377.0, "notes": "", "branch": "خضيرة", "received": false}, {"id": 26, "name": "يونس محمد محمد", "salary": 2000.0, "days": 30, "withdrawals": 100.0, "extra": 0, "bonuses": 0, "penalties": 0.0, "net": 1900.0, "notes": "", "branch": "خضيرة", "received": false}, {"id": 27, "name": "احمد عبد العزيز عبد الله", "salary": 1800.0, "days": 30, "withdrawals": 0.0, "extra": 0, "bonuses": 0, "penalties": 50.0, "net": 1750.0, "notes": "", "branch": "خضيرة", "received": false}, {"id": 28, "name": "محمد راسل ملا", "salary": 1500.0, "days": 30, "withdrawals": 0.0, "extra": 0, "bonuses": 0, "penalties": 0.0, "net": 1500.0, "notes": "", "branch": "خضيرة", "received": false}, {"id": 29, "name": "عبد العزيز احمد عبده", "salary": 1700.0, "days": 29, "withdrawals": 50.0, "extra": 0, "bonuses": 0, "penalties": 0.0, "net": 1593.0, "notes": "", "branch": "خضيرة", "received": false}, {"id": 30, "name": "محمد تاريكول اسلام", "salary": 1500.0, "days": 30, "withdrawals": 1200.0, "extra": 0, "bonuses": 0, "penalties": 50.0, "net": 250.0, "notes": "", "branch": "خضيرة", "received": false}, {"id": 31, "name": "هاشم منصور علي", "salary": 1500.0, "days": 30, "withdrawals": 308.0, "extra": 0, "bonuses": 0, "penalties": 0.0, "net": 1192.0, "notes": "", "branch": "خضيرة", "received": false}, {"id": 32, "name": "حازم مصطفى", "salary": 500.0, "days": 30, "withdrawals": 250.0, "extra": 0, "bonuses": 0, "penalties": 0.0, "net": 250.0, "notes": "", "branch": "خضيرة", "received": false}, {"id": 33, "name": "ابو الياس", "salary": 4000.0, "days": 30, "withdrawals": 35.0, "extra": 0, "bonuses": 0, "penalties": 0.0, "net": 3965.0, "notes": "", "branch": "خضيرة", "received": false}, {"id": 34, "name": "مستحقات مؤسسة", "salary": 1000.0, "days": 30, "withdrawals": 0.0, "extra": 0, "bonuses": 0, "penalties": 0.0, "net": 1000.0, "notes": "", "branch": "خضيرة", "received": false}, {"id": 35, "name": "محمد د شكي", "salary": 1800.0, "days": 30, "withdrawals": 400.0, "extra": 0, "bonuses": 0, "penalties": 100.0, "net": 1300.0, "notes": "", "branch": "البديع", "received": false}, {"id": 36, "name": "صدام محمد عبد الله", "salary": 2500.0, "days": 30, "withdrawals": 500.0, "extra": 0, "bonuses": 0, "penalties": 200.0, "net": 1800.0, "notes": "", "branch": "البديع", "received": false}, {"id": 37, "name": "عمر علي المنار", "salary": 2000.0, "days": 30, "withdrawals": 300.0, "extra": 0, "bonuses": 0, "penalties": 0.0, "net": 1700.0, "notes": "", "branch": "البديع", "received": false}, {"id": 38, "name": "عبد الله محمد عبد الله", "salary": 1800.0, "days": 30, "withdrawals": 200.0, "extra": 0, "bonuses": 0, "penalties": 50.0, "net": 1550.0, "notes": "", "branch": "البديع", "received": false}, {"id": 39, "name": "مد سروار اوسين", "salary": 1500.0, "days": 30, "withdrawals": 200.0, "extra": 0, "bonuses": 0, "penalties": 0.0, "net": 1300.0, "notes": "", "branch": "البديع", "received": false}, {"id": 40, "name": "حازم مصطفى", "salary": 500.0, "days": 30, "withdrawals": 0.0, "extra": 0, "bonuses": 0, "penalties": 0.0, "net": 500.0, "notes": "", "branch": "البديع", "received": false}, {"id": 41, "name": "ابو الياس", "salary": 2000.0, "days": 30, "withdrawals": 65.0, "extra": 0, "bonuses": 0, "penalties": 0.0, "net": 1935.0, "notes": "", "branch": "البديع", "received": false}, {"id": 42, "name": "مستحقات مؤسسة", "salary": 1000.0, "days": 30, "withdrawals": 0.0, "extra": 0, "bonuses": 0, "penalties": 0.0, "net": 1000.0, "notes": "", "branch": "البديع", "received": false}, {"id": 43, "name": "مصطفى عبد العزيز مريز", "salary": 2700.0, "days": 30, "withdrawals": 250.0, "extra": 0, "bonuses": 0, "penalties": 0.0, "net": 2450.0, "notes": "", "branch": "ضمد", "received": false}, {"id": 44, "name": "عمر احمد سالم", "salary": 2500.0, "days": 30, "withdrawals": 0.0, "extra": 0, "bonuses": 0, "penalties": 50.0, "net": 2450.0, "notes": "", "branch": "ضمد", "received": false}, {"id": 45, "name": "محمد تناسيم اسلام", "salary": 1500.0, "days": 30, "withdrawals": 1200.0, "extra": 0, "bonuses": 0, "penalties": 100.0, "net": 200.0, "notes": "", "branch": "ضمد", "received": false}, {"id": 46, "name": "زكريا إبراهيم علي", "salary": 2000.0, "days": 29, "withdrawals": 300.0, "extra": 0, "bonuses": 0, "penalties": 0.0, "net": 1633.0, "notes": "", "branch": "ضمد", "received": false}, {"id": 47, "name": "روح ال أمين", "salary": 1500.0, "days": 30, "withdrawals": 100.0, "extra": 0, "bonuses": 0, "penalties": 50.0, "net": 1350.0, "notes": "", "branch": "ضمد", "received": false}, {"id": 48, "name": "فؤاد مصطفى فؤاد", "salary": 1800.0, "days": 30, "withdrawals": 0.0, "extra": 0, "bonuses": 0, "penalties": 50.0, "net": 1750.0, "notes": "", "branch": "ضمد", "received": false}, {"id": 49, "name": "حازم مصطفى", "salary": 500.0, "days": 30, "withdrawals": 0.0, "extra": 0, "bonuses": 0, "penalties": 0.0, "net": 500.0, "notes": "", "branch": "ضمد", "received": false}, {"id": 50, "name": "ابو الياس", "salary": 2000.0, "days": 30, "withdrawals": 0.0, "extra": 0, "bonuses": 0, "penalties": 0.0, "net": 2000.0, "notes": "", "branch": "ضمد", "received": false}, {"id": 51, "name": "مستحقات مؤسسة", "salary": 1000.0, "days": 30, "withdrawals": 0.0, "extra": 0, "bonuses": 0, "penalties": 0.0, "net": 1000.0, "notes": "", "branch": "ضمد", "received": false}, {"id": 52, "name": "عبد الرحمن خطيب", "salary": 2500.0, "days": 30, "withdrawals": 0.0, "extra": 0, "bonuses": 0, "penalties": 0.0, "net": 2500.0, "notes": "", "branch": "الثلاجة", "received": false}, {"id": 53, "name": "زكي", "salary": 1500.0, "days": 30, "withdrawals": 0.0, "extra": 0, "bonuses": 0, "penalties": 0.0, "net": 1500.0, "notes": "", "branch": "الثلاجة", "received": false}, {"id": 54, "name": "فؤاد عبد الله محمد", "salary": 2000.0, "days": 30, "withdrawals": 0.0, "extra": 0, "bonuses": 0, "penalties": 0.0, "net": 2000.0, "notes": "", "branch": "الثلاجة", "received": false}, {"id": 55, "name": "حسن ياسر حسن قرني", "salary": 1500.0, "days": 10, "withdrawals": 0.0, "extra": 0, "bonuses": 0, "penalties": 0.0, "net": 500.0, "notes": "", "branch": "الثلاجة", "received": false}, {"id": 56, "name": "خالد فتحي", "salary": 2500.0, "days": 30, "withdrawals": 150.0, "extra": 0, "bonuses": 0, "penalties": 0.0, "net": 2350.0, "notes": "", "branch": "المعمل", "received": false}, {"id": 57, "name": "اينيكواتي كاندان كولافان", "salary": 2000.0, "days": 30, "withdrawals": 0.0, "extra": 0, "bonuses": 0, "penalties": 0.0, "net": 2000.0, "notes": "", "branch": "المعمل", "received": false}, {"id": 58, "name": "سدجر ال رحمن", "salary": 1200.0, "days": 30, "withdrawals": 0.0, "extra": 0, "bonuses": 0, "penalties": 0.0, "net": 1200.0, "notes": "", "branch": "المعمل", "received": false}];
+        let currentFilter = 'all', currentBranch = 'all', searchTerm = '';
+
+        function loadSavedState() {
+            const saved = localStorage.getItem('salary_received_state');
+            if (saved) {
+                const state = JSON.parse(saved);
+                employees.forEach(emp => { if (state[emp.id] !== undefined) emp.received = state[emp.id]; });
+            }
+        }
+        function saveState() {
+            const state = {};
+            employees.forEach(emp => { state[emp.id] = emp.received; });
+            localStorage.setItem('salary_received_state', JSON.stringify(state));
+            showToast('تم حفظ الحالة بنجاح!');
+        }
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg; t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2000);
+        }
+        function populateBranches() {
+            const branches = [...new Set(employees.map(e => e.branch))];
+            const sel = document.getElementById('branchFilter');
+            branches.forEach(b => { const o = document.createElement('option'); o.value = b; o.textContent = b; sel.appendChild(o); });
+        }
+        function toggleReceived(id) {
+            const emp = employees.find(e => e.id === id);
+            if (emp) { emp.received = !emp.received; renderTable(); updateStats(); saveState(); }
+        }
+        function setFilter(f) {
+            currentFilter = f;
+            document.querySelectorAll('.filter-btn').forEach(btn => { btn.classList.remove('active'); if (btn.dataset.filter === f) btn.classList.add('active'); });
+            renderTable();
+        }
+        function filterByBranch() { currentBranch = document.getElementById('branchFilter').value; renderTable(); }
+        function searchEmployees() { searchTerm = document.getElementById('searchInput').value.toLowerCase(); renderTable(); }
+        function getFiltered() {
+            return employees.filter(emp => {
+                if (currentFilter === 'received' && !emp.received) return false;
+                if (currentFilter === 'pending' && emp.received) return false;
+                if (currentBranch !== 'all' && emp.branch !== currentBranch) return false;
+                if (searchTerm && !emp.name.toLowerCase().includes(searchTerm)) return false;
+                return true;
+            });
+        }
+        function renderTable() {
+            const filtered = getFiltered();
+            const tbody = document.getElementById('tableBody');
+            if (filtered.length === 0) { tbody.innerHTML = '<div class="no-results">لا توجد نتائج مطابقة للبحث</div>'; return; }
+            tbody.innerHTML = filtered.map(emp => `
+                <div class="table-row ${emp.received ? 'received' : ''}">
+                    <div class="cell">${emp.id}</div>
+                    <div class="cell name-cell">${emp.name}</div>
+                    <div class="cell hide-mobile-sm"><span class="branch-tag">${emp.branch}</span></div>
+                    <div class="cell amount">${emp.salary.toLocaleString()}</div>
+                    <div class="cell hide-mobile">${emp.days}</div>
+                    <div class="cell amount negative hide-mobile">${emp.withdrawals > 0 ? '-' + emp.withdrawals.toLocaleString() : '0'}</div>
+                    <div class="cell amount positive hide-mobile">${emp.extra > 0 ? '+' + emp.extra.toLocaleString() : '0'}</div>
+                    <div class="cell amount positive hide-mobile">${emp.bonuses > 0 ? '+' + emp.bonuses.toLocaleString() : '0'}</div>
+                    <div class="cell amount negative hide-mobile">${emp.penalties > 0 ? '-' + emp.penalties.toLocaleString() : '0'}</div>
+                    <div class="cell net-amount">${emp.net.toLocaleString()}</div>
+                    <div class="cell hide-mobile">${emp.notes || '-'}</div>
+                    <div class="cell checkbox-cell">
+                        <div class="custom-checkbox ${emp.received ? 'checked' : ''}" onclick="toggleReceived(${emp.id})" title="${emp.received ? 'تم الاستلام - اضغط للإلغاء' : 'اضغط للتأكيد على الاستلام'}"></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        function updateStats() {
+            const total = employees.length;
+            const received = employees.filter(e => e.received).length;
+            const pending = total - received;
+            const totalSalary = employees.reduce((sum, e) => sum + e.net, 0);
+            document.getElementById('totalEmployees').textContent = total;
+            document.getElementById('totalSalary').textContent = totalSalary.toLocaleString() + ' ريال';
+            document.getElementById('receivedCount').textContent = received + ' / ' + total;
+            document.getElementById('pendingCount').textContent = pending;
+            document.getElementById('receivedProgress').style.width = (received / total * 100) + '%';
+        }
+        function exportData() {
+            const data = employees.map(emp => ({
+                'الاسم': emp.name, 'الفرع': emp.branch, 'الراتب': emp.salary, 'الحضور': emp.days,
+                'السحبيات': emp.withdrawals, 'الإضافي': emp.extra, 'المكافآت': emp.bonuses,
+                'العقوبات': emp.penalties, 'الصافي': emp.net,
+                'حالة الاستلام': emp.received ? 'تم الاستلام' : 'لم يتم الاستلام', 'ملاحظات': emp.notes
+            }));
+            const headers = Object.keys(data[0]);
+            const csv = [headers.join(','), ...data.map(row => headers.map(h => `"${row[h]}"`).join(','))].join('\n');
+            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'كشوف_المرتبات_' + new Date().toLocaleDateString('ar-SA') + '.csv';
+            link.click();
+            showToast('تم تصدير البيانات بنجاح!');
+        }
+        loadSavedState(); populateBranches(); renderTable(); updateStats();
+    </script>
+</body>
+</html>
